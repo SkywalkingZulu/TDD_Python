@@ -10,12 +10,29 @@ class HomePageTest(TestCase):   #繼承 django.test.TestCase 類別
     found = resolve('/')
     self.assertEqual(found.func , home_page)
 
-# V2 , (重構)binary位元組轉為Python字串再比較 , response.content.decode() &　render_to_string('home.html')
-  def test_home_page_returns_correct_html(self):
+  def test_home_page_can_save_a_POST_request(self):
     request = HttpRequest()
+    request.method = 'POST'
+    request.POST['item_text'] = 'A new list item..'
+
     response = home_page(request)
-    expected_html = render_to_string('home.html')
+
+    import time
+    time.sleep(10)
+
+    self.assertIn('A new list item..',response.content.decode())
+    expected_html = render_to_string(
+      'home.html',
+      {'new_item_text':'A new list item..'}
+    )
     self.assertEqual(response.content.decode() , expected_html)
+
+# V2 , (重構)binary位元組轉為Python字串再比較 , response.content.decode() &　render_to_string('home.html')
+  # def test_home_page_returns_correct_html(self):
+  #   request = HttpRequest()
+  #   response = home_page(request)
+  #   expected_html = render_to_string('home.html')
+  #   self.assertEqual(response.content.decode() , expected_html)
     
 # V1 , 直接用binary位元組作比較
   # def test_home_page_returns_correct_html(self):
