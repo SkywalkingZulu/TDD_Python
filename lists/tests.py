@@ -11,6 +11,11 @@ class HomePageTest(TestCase):   #繼承 django.test.TestCase 類別
     found = resolve('/')
     self.assertEqual(found.func , home_page)
 
+  def test_home_page_only_saves_items_when_necessary(self):
+    request = HttpRequest()
+    home_page(request)
+    self.assertEqual(Item.objects.count(),0)
+
   def test_home_page_can_save_a_POST_request(self):
     request = HttpRequest()
     request.method = 'POST'
@@ -18,15 +23,41 @@ class HomePageTest(TestCase):   #繼承 django.test.TestCase 類別
 
     response = home_page(request)
 
-    import time
-    time.sleep(10)
+    self.assertEqual(Item.objects.count(),1)
+    new_item = Item.objects.first()
+    self.assertEqual(new_item.text,'A new list item..')
+  
+  def test_home_page_redirects_after_POST(self):
+    request = HttpRequest()
+    request.method = 'POST'
+    request.POST['item_text'] = 'A new list item..'
 
-    self.assertIn('A new list item..',response.content.decode())
-    expected_html = render_to_string(
-      'home.html',
-      {'new_item_text':'A new list item..'}
-    )
-    self.assertEqual(response.content.decode() , expected_html)
+    response = home_page(request)
+    
+    # 儲存後,應重新導回首頁
+    self.assertEqual(response.status_code,302) #302=重新導向
+    self.assertEqual(response['location'],'/')
+
+  def test_home_page_displays_all_list_items(self):
+    Item.objects.create(text='item 1')
+    Item.objects.create(text='item 2')
+
+    request = HttpRequest()
+    response = home_page(request)
+
+    self.assertIn('item 1',response.content.decode())
+    self.assertIn('item 2',response.content.decode())
+
+
+    # import time
+    # time.sleep(10)
+
+    # self.assertIn('A new list item..',response.content.decode()) #測試1:直接找response內容是否有'A new list item..'
+    # expected_html = render_to_string(
+    #   'home.html',
+    #   {'new_item_text':'A new list item..'} #測試2:將HTML轉成Python字串後,再和response內容比較
+    # )
+    # self.assertEqual(response.content.decode() , expected_html)
 
 class ItemModelTest(TestCase):
   def test_saving_and_retrieving_items(self):
@@ -45,7 +76,6 @@ class ItemModelTest(TestCase):
     second_saved_item = saved_items[1]
     self.assertEqual(first_saved_item.text , 'The first (ever) list item')
     self.assertEqual(second_saved_item.text , 'Item the second')
-
 
 # V2 , (重構)binary位元組轉為Python字串再比較 , response.content.decode() &　render_to_string('home.html')
   # def test_home_page_returns_correct_html(self):
