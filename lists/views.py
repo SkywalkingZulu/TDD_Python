@@ -5,6 +5,7 @@ from django.http import HttpResponse
 def home_page(request):
   return render(request , 'home.html',
       {'new_item_text':request.POST.get('item_text','')} 
+      #Notice:後端要用name='item_text'抓request內的值,而不是用id='id_new_item'抓
     ) #Django會在APP目錄內,自動尋找templates資料夾 & 顯示的範本(templates)名稱
 
 # V1
