@@ -13,6 +13,15 @@ class NewVisitor(unittest.TestCase):
   def tearDown(self): #測試後執行
     return self.browser.quit()
 
+  def check_for_row_in_list_table(self,row_text):
+    # 沒有等待直接找,會報錯
+    # table = self.browser.find_element_by_id('id_list_table') 
+    table = WebDriverWait(self.browser , 20).until(
+      EC.presence_of_element_located((By.ID , "id_list_table"))
+    ) #Browser要等到Response回傳後,就可以找到了HTML element...^O^
+    rows = table.find_elements_by_tag_name('tr')
+    self.assertIn(row_text,[row.text for row in rows])
+
   def test_can_start_a_list_and_retrieve_it_later(self): #主要區段
     self.browser.get('http://localhost:8000') #User查看首頁
 
@@ -31,20 +40,11 @@ class NewVisitor(unittest.TestCase):
     inputbox.send_keys(Keys.ENTER)
     
     # 除錯方式,在執行時,使用time.sleep來暫停測試
-    # import time
-    # time.sleep(60)
+    import time
+    time.sleep(5)
 
-    # table = self.browser.find_element_by_id('id_list_table') #selenium找不到 'id_list_table'
-    table = None
-    table = WebDriverWait(self.browser , 10).until(
-      EC.presence_of_element_located((By.ID, "id_list_table"))
-    ) #Browser要等到回傳後,就可以找到了...^O^
-    
-    if table != None:
-      rows = table.find_elements_by_tag_name('tr') #所有行(ROW)
-      self.assertIn('1: Buy dinner',[row.text for row in rows])
-    else:
-      print('StaleElementReferenceException 發生..')
+    self.check_for_row_in_list_table('Buy dinner')
+    self.check_for_row_in_list_table('Go running')
 
     self.fail('Finish the Test!!')
 
